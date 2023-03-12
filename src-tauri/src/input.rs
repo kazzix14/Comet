@@ -1,3 +1,18 @@
+use std::fmt::Display;
+
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum InputError {
+    #[error("failed to map input `{key}`")]
+    InputMapError { key: String },
+}
+
+impl From<InputError> for String {
+    fn from(value: InputError) -> Self {
+        format!("{}", value)
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum Key {
@@ -30,9 +45,9 @@ pub enum Key {
 }
 
 impl TryFrom<&str> for Key {
-    type Error = ();
+    type Error = InputError;
 
-    fn try_from(key_str: &str) -> Result<Self, ()> {
+    fn try_from(key_str: &str) -> Result<Self, Self::Error> {
         use Key::*;
 
         match key_str {
@@ -62,7 +77,9 @@ impl TryFrom<&str> for Key {
             "x" => Ok(X),
             "y" => Ok(Y),
             "z" => Ok(Z),
-            _ => Err(()),
+            _ => Err(InputError::InputMapError {
+                key: key_str.into(),
+            }),
         }
     }
 }
