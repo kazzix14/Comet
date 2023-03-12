@@ -1,11 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
 import "./App.css";
 
+const useKeyState = () => {
+  const keyDownListener = async (event: KeyboardEvent) => {
+    await invoke("handle_key_down", { input: event.key });
+  };
+  const keyUpListener = async (event: KeyboardEvent) => {
+    await invoke("handle_key_up", { input: event.key });
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", keyDownListener);
+    window.addEventListener("keyup", keyUpListener);
+
+    return () => {
+      window.removeEventListener("keydown", keyDownListener);
+      window.removeEventListener("keyup", keyUpListener);
+    };
+  }, []);
+};
+
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  useKeyState();
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
