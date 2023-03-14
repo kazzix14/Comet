@@ -5,7 +5,10 @@ mod input;
 
 use input::Key;
 
-use std::{collections::HashMap, sync::Mutex};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use tauri::State;
 
@@ -17,7 +20,10 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn handle_key_down(input: &str, key_state: State<Mutex<KeyState>>) -> Result<(), String> {
+async fn handle_key_down(
+    input: &str,
+    key_state: State<'_, Arc<Mutex<KeyState>>>,
+) -> Result<(), String> {
     let mut key_state = key_state.lock().unwrap();
     let key = Key::try_from(input)?;
     key_state.0.insert(key, true);
@@ -37,7 +43,10 @@ fn handle_key_down(input: &str, key_state: State<Mutex<KeyState>>) -> Result<(),
 }
 
 #[tauri::command]
-fn handle_key_up(input: &str, key_state: State<Mutex<KeyState>>) -> Result<(), String> {
+async fn handle_key_up(
+    input: &str,
+    key_state: State<'_, Arc<Mutex<KeyState>>>,
+) -> Result<(), String> {
     let mut key_state = key_state.lock().unwrap();
     let key = Key::try_from(input)?;
     key_state.0.insert(key, false);
@@ -56,7 +65,7 @@ fn main() {
             }
             Ok(())
         })
-        .manage(Mutex::from(KeyState(HashMap::new())))
+        .manage(Arc::new(Mutex::from(KeyState(HashMap::new()))))
         .invoke_handler(tauri::generate_handler![
             greet,
             handle_key_down,
