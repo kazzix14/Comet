@@ -11,11 +11,13 @@ import {
 import { StyledApp } from "./app";
 import { editorSlice } from "./editor/editor.slice";
 import { inputSlice } from "./input.slice";
+import { backendSlice } from "./backend.slice";
 
 const store = configureStore({
   reducer: {
     editor: editorSlice.reducer,
     input: inputSlice.reducer,
+    backend: backendSlice.reducer,
   },
 });
 

@@ -1,13 +1,13 @@
-use tokio::sync::mpsc;
-
 use crate::Event;
 
-pub struct Sequencer {
+use tokio::sync::mpsc;
+
+pub struct Controller {
     event_sender: mpsc::UnboundedSender<Event>,
     event_receiver: mpsc::UnboundedReceiver<Event>,
 }
 
-impl Sequencer {
+impl Controller {
     pub fn new(
         event_sender: mpsc::UnboundedSender<Event>,
         event_receiver: mpsc::UnboundedReceiver<Event>,
@@ -19,16 +19,13 @@ impl Sequencer {
     }
 
     pub async fn run(mut self) {
-        println!("start");
         while let Some(event) = self.event_receiver.recv().await {
-            println!("got event in sequencer");
             match event {
                 Event::HealthCheck => {
-                    println!("it's health check");
-                    self.event_sender.send(Event::HealthCheck).unwrap();
+                    //println!("HealthCheck");
+                    //self.event_sender.send(Event::HealthCheck).unwrap();
                 }
             }
         }
-        println!("end");
     }
 }

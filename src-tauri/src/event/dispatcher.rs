@@ -1,30 +1,28 @@
 use crate::Event;
 
-use std::sync::mpsc;
+use tokio::sync::mpsc;
 
 pub struct Dispatcher {
-    event_sender: mpsc::Sender<Event>,
-    event_receiver: mpsc::Receiver<Event>,
+    window: tauri::Window,
+    event_receiver: mpsc::UnboundedReceiver<Event>,
 }
 
 impl Dispatcher {
-    pub fn new(event_sender: mpsc::Sender<Event>, event_receiver: mpsc::Receiver<Event>) -> Self {
+    pub fn new(
+        window: tauri::Window,
+        event_receiver: mpsc::UnboundedReceiver<Event>,
+    ) -> Self {
         Self {
-            event_sender,
+            window,
             event_receiver,
         }
     }
 
-    pub async fn spawn(self) {
-        tokio::spawn(async move {
-            for event in self.event_receiver.iter() {
-                match event {
-                    Event::HealthCheck => {
-                        println!("HealthCheck");
-                        self.event_sender.send(Event::HealthCheck).unwrap();
-                    }
-                }
-            }
-        });
+    pub async fn run(mut self) {
+        while let Some(event) = self.event_receiver.recv().await {
+
+            println!("sending event {:?} to frontend", event);
+            self.window.emit("player:play:feedback", event).unwrap();
+        }
     }
 }
