@@ -1,4 +1,4 @@
-import { Command } from "./command";
+import { COMMAND_LOOKUP_TABLE, CommandLookupTable } from "./command";
 
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
@@ -7,20 +7,13 @@ export type Key = string;
 export const inputSlice = createSlice({
   name: "input",
   initialState: {
-    keySequence: Array<Key>(),
-    command: null as Command | null,
+    commandLookupTable: COMMAND_LOOKUP_TABLE,
   },
   reducers: {
-    pushKey: (state, action: PayloadAction<Key>) => {
-      state.keySequence = [...state.keySequence, action.payload];
-    },
-    clear: (state) => {
-      state.keySequence = [];
-    },
-    command: (state, action: PayloadAction<Command>) => {
-      state.command = action.payload;
+    updateCommandLookupTable: (state, action: PayloadAction<CommandLookupTable>) => {
+      state.commandLookupTable = action.payload;
     },
   },
 });
 
-export const { pushKey, clear, command } = inputSlice.actions;
+export const { updateCommandLookupTable } = inputSlice.actions;
