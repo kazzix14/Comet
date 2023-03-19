@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod controller;
-mod event;
+mod frontend;
 mod input;
 mod prelude;
 mod sequencer;
@@ -33,20 +33,13 @@ async fn main() {
 
     tauri::Builder::default()
         .setup(move |app| {
-            app.get_window("main")
-                .unwrap()
-                .listen("player:play", move |event| {
-                    println!("got event-name with payload {:?}", event.payload());
-                    sequencer_event_tx.send(Event::HealthCheck).unwrap();
-                    controller_event_tx.send(Event::HealthCheck).unwrap();
-                    println!("sent events to sequencer and controller");
-                });
-
             let window = app.get_window("main").unwrap();
 
-            let dispatcher =
-                event::Dispatcher::new(window, dispatcher_event_rx).run();
+            let dispatcher = frontend::Dispatcher::new(window.clone(), dispatcher_event_rx).run();
             let dispatcher_handle = tokio::spawn(dispatcher);
+            let listener =
+                frontend::Listener::new(window, sequencer_event_tx, controller_event_tx).run();
+            let listener_handle = tokio::spawn(listener);
 
             #[cfg(debug_assertions)] // only include this code on debug builds
             {
