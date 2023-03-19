@@ -10,19 +10,19 @@ import {
 
 import { StyledApp } from "./app";
 import { editorSlice } from "./editor/editor.slice";
-import { appSlice } from "./app.slice";
+import { inputSlice } from "./input.slice";
 
 const store = configureStore({
   reducer: {
     editor: editorSlice.reducer,
-    app: appSlice.reducer,
+    input: inputSlice.reducer,
   },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-type DispatchFunction = () => AppDispatch;
+export type DispatchFunction = () => AppDispatch;
 export const useAppDispatch: DispatchFunction = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
