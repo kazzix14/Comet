@@ -3,9 +3,9 @@ run-name: "testing `${{github.event.head_commit.id}}: ${{github.event.head_commi
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ main ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
