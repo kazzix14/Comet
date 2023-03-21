@@ -1,12 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { configureStore } from "@reduxjs/toolkit";
-import {
-  Provider,
-  TypedUseSelectorHook,
-  useDispatch,
-  useSelector,
-} from "react-redux";
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 
 import { StyledApp } from "./app";
 import { editorSlice } from "./editor/editor.slice";

@@ -29,6 +29,9 @@ impl Listener {
                 let Ok(command) = serde_json::from_str::<Command>(command) else {
                     println!("failed to parse command payload: {}", command); return;
                 };
+
+                println!("got command: {:?}", command);
+
                 match command {
                     Command::HealthCheck => {
                         self.sequencer_command
@@ -38,10 +41,10 @@ impl Listener {
                             .send(controller::Command::HealthCheck)
                             .unwrap();
                     }
-                    Command::ControllerCommand(command) => {
+                    Command::ControllerCommand { content: command } => {
                         self.controller_command.send(command).unwrap();
                     }
-                    Command::SequencerCommand(command) => {
+                    Command::SequencerCommand { content: command } => {
                         self.sequencer_command.send(command).unwrap();
                     }
                 }

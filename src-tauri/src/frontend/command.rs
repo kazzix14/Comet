@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, ts_rs::TS)]
-#[ts(export, export_to = "bindings/command.ts")]
+#[serde(tag = "type")]
+#[ts(export, export_to = "../src/@types/backend/command.ts")]
 pub enum Command {
     HealthCheck,
-    SequencerCommand(crate::sequencer::Command),
-    ControllerCommand(crate::controller::Command),
+    SequencerCommand { content: crate::sequencer::Command },
+    ControllerCommand { content: crate::controller::Command },
 }

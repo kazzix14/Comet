@@ -1,18 +1,18 @@
 import { Key } from "react";
-
-export type Command = string;
+import { Command } from "./@types/backend/command";
+import { app } from "@tauri-apps/api";
 
 export const COMMAND_LOOKUP_TABLE: CommandLookupTable = {
-  Escape: "clear",
-  h: "HealthCheck",
-  " ": "command",
+  Escape: { type: "HealthCheck" },
+  h: { type: "HealthCheck" },
+  " ": { type: "SequencerCommand", content: { type: "HealthCheck" } },
   a: {
     b: {
-      c: "You've done",
+      c: { type: "SequencerCommand", content: { type: "Play" } },
     },
   },
   x: {
-    d: "Yeah",
+    d: { type: "ControllerCommand", content: { type: "HealthCheck" } },
   },
 };
 
@@ -25,10 +25,33 @@ export const lookup = (key: Key, commandLookupTable: CommandLookupTable): [Comma
 
   if (lookupResult === undefined) {
     return [null, COMMAND_LOOKUP_TABLE];
-  } else if (typeof lookupResult === "string") {
-    commandLookupTable = COMMAND_LOOKUP_TABLE;
+  } else if (isCommand(lookupResult)) {
     return [lookupResult, COMMAND_LOOKUP_TABLE];
   } else {
     return [null, lookupResult];
+  }
+};
+
+export const display = (commandLookupTable: CommandLookupTable, current = ""): Array<string> => {
+  return Object.keys(commandLookupTable).flatMap((key) => {
+    const result = commandLookupTable[key];
+
+    const appended = `${current}${key}`;
+    console.log("current", current);
+    console.log("appended", appended);
+
+    if (result === undefined || isCommand(result)) {
+      return appended;
+    }
+
+    return display(result, appended);
+  });
+};
+
+const isCommand = (maybeCommand: Command | CommandLookupTable): maybeCommand is Command => {
+  if (maybeCommand.type !== undefined) {
+    return true;
+  } else {
+    return false;
   }
 };

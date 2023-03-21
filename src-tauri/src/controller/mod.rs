@@ -1,8 +1,8 @@
-mod notification;
 mod command;
+mod notification;
 
-pub use notification::Notification;
 pub use command::Command;
+pub use notification::Notification;
 
 use tokio::sync::mpsc;
 
@@ -28,6 +28,9 @@ impl Controller {
         while let Some(event) = self.command.recv().await {
             match event {
                 Command::HealthCheck => {
+                    self.notification_dispatcher
+                        .send(Notification::HealthCheck.into())
+                        .unwrap();
                     //println!("HealthCheck");
                     //self.event_sender.send(Event::HealthCheck).unwrap();
                 }
@@ -35,4 +38,3 @@ impl Controller {
         }
     }
 }
-

@@ -32,7 +32,6 @@ impl Sequencer {
 
     pub async fn run(mut self) {
         while let Some(event) = self.command_receiver.recv().await {
-            println!("got event in sequencer");
             match event {
                 Command::HealthCheck => {
                     self.notification_dispatcher
