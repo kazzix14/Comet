@@ -2,4 +2,7 @@
 import type { ControllerNotification } from "./controller/notification";
 import type { SequencerNotification } from "./sequencer/notification";
 
-export type Notification = { type: "HealthCheck" } | { type: "SequencerNotification", content: SequencerNotification, } | { type: "ControllerNotification", content: ControllerNotification, };
+export type Notification =
+  | { type: "HealthCheck" }
+  | { type: "SequencerNotification"; content: SequencerNotification }
+  | { type: "ControllerNotification"; content: ControllerNotification };

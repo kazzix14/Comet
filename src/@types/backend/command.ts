@@ -2,4 +2,7 @@
 import type { ControllerCommand } from "./controller/command";
 import type { SequencerCommand } from "./sequencer/command";
 
-export type Command = { type: "HealthCheck" } | { type: "SequencerCommand", content: SequencerCommand, } | { type: "ControllerCommand", content: ControllerCommand, };
+export type Command =
+  | { type: "HealthCheck" }
+  | { type: "SequencerCommand"; content: SequencerCommand }
+  | { type: "ControllerCommand"; content: ControllerCommand };

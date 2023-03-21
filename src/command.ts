@@ -1,6 +1,5 @@
 import { Key } from "react";
 import { Command } from "./@types/backend/command";
-import { app } from "@tauri-apps/api";
 
 export const COMMAND_LOOKUP_TABLE: CommandLookupTable = {
   Escape: { type: "HealthCheck" },
