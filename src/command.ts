@@ -36,8 +36,6 @@ export const display = (commandLookupTable: CommandLookupTable, current = ""): A
     const result = commandLookupTable[key];
 
     const appended = `${current}${key}`;
-    console.log("current", current);
-    console.log("appended", appended);
 
     if (result === undefined || isCommand(result)) {
       return appended;

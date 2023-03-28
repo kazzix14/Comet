@@ -11,7 +11,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -25,3 +25,13 @@ jobs:
     - name: test
       run: cargo test --verbose
       working-directory: ./src-tauri
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install modules
+      run: npm ci
+    - name: Run ESLint
+      run: npm run eslint
+    - name: Run Prettier
+      run: npm run prettier
