@@ -25,10 +25,13 @@ async fn main() {
     let (dispatcher_event_tx, dispatcher_event_rx) = mpsc::unbounded_channel();
     let (controller_event_tx, controller_event_rx) = mpsc::unbounded_channel();
 
-    let sequencer = Sequencer::new(dispatcher_event_tx.clone(), sequencer_event_rx).run();
-    let controller = Controller::new(dispatcher_event_tx, controller_event_rx).run();
+    let controller = Controller::new(dispatcher_event_tx.clone(), controller_event_rx).run();
 
-    let sequencer_handle = tokio::spawn(sequencer);
+    let sequencer_thread_handle = std::thread::spawn(move || {
+        Sequencer::new(dispatcher_event_tx.clone(), sequencer_event_rx).run();
+    });
+
+    //let sequencer_handle = tokio::spawn(sequencer);
     let controller_handle = tokio::spawn(controller);
 
     tauri::Builder::default()
@@ -53,7 +56,8 @@ async fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    let (sequencer_result, controller_result) = tokio::join!(sequencer_handle, controller_handle);
-    sequencer_result.unwrap();
-    controller_result.unwrap();
+    let controller_result = tokio::join!(controller_handle);
+    controller_result.0.unwrap();
+
+    sequencer_thread_handle.join().unwrap();
 }

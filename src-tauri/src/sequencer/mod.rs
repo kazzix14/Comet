@@ -16,6 +16,7 @@ pub struct Sequencer {
 
 pub struct SequencerState {
     playing: bool,
+    cursor_position: Option<u64>,
 }
 
 impl Sequencer {
@@ -26,30 +27,38 @@ impl Sequencer {
         Self {
             notification_dispatcher,
             command_receiver,
-            state: SequencerState { playing: false },
+            state: SequencerState {
+                playing: false,
+                cursor_position: None,
+            },
         }
     }
 
-    pub async fn run(mut self) {
-        while let Some(event) = self.command_receiver.recv().await {
-            match event {
-                Command::HealthCheck => {
-                    self.notification_dispatcher
-                        .send(Notification::HealthCheck.into())
-                        .unwrap();
-                },
-                Command::Play => {
-                    self.play();
-                },
-                Command::Stop => {
-                    self.stop();
-                },
+    pub fn run(mut self) {
+        loop {
+            if let Ok(event) = self.command_receiver.try_recv() {
+                match event {
+                    Command::HealthCheck => {
+                        self.notification_dispatcher
+                            .send(Notification::HealthCheck.into())
+                            .unwrap();
+                    },
+                    Command::Play => {
+                        self.play();
+                    },
+                    Command::Stop => {
+                        self.stop();
+                    },
+                }
             }
+
+            std::thread::sleep(std::time::Duration::from_millis(10));
         }
     }
 
     fn play(&mut self) {
         self.state.playing = true;
+
         self.notification_dispatcher
             .send(Notification::Play.into())
             .unwrap();
