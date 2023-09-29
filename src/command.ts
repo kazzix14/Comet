@@ -5,10 +5,9 @@ export const COMMAND_LOOKUP_TABLE: CommandLookupTable = {
   Escape: { type: "HealthCheck" },
   h: { type: "HealthCheck" },
   " ": { type: "SequencerCommand", content: { type: "HealthCheck" } },
-  a: {
-    b: {
-      c: { type: "SequencerCommand", content: { type: "Play" } },
-    },
+  s: {
+    p: { type: "SequencerCommand", content: { type: "Play" } },
+    s: { type: "SequencerCommand", content: { type: "Stop" } },
   },
   x: {
     d: { type: "ControllerCommand", content: { type: "HealthCheck" } },
@@ -31,7 +30,7 @@ export const lookup = (key: Key, commandLookupTable: CommandLookupTable): [Comma
   }
 };
 
-export const display = (commandLookupTable: CommandLookupTable, current = ""): Array<string> => {
+export const displayCandidateKeys = (commandLookupTable: CommandLookupTable, current = ""): Array<string> => {
   return Object.keys(commandLookupTable).flatMap((key) => {
     const result = commandLookupTable[key];
 
@@ -41,7 +40,7 @@ export const display = (commandLookupTable: CommandLookupTable, current = ""): A
       return appended;
     }
 
-    return display(result, appended);
+    return displayCandidateKeys(result, appended);
   });
 };
 

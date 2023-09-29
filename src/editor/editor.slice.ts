@@ -1,10 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+interface editorState {
+  focusedRow: number;
+  isPlaying: boolean | null;
+}
+
 export const editorSlice = createSlice({
   name: "editor",
   initialState: {
     focusedRow: 0,
-  },
+    isPlaying: null,
+  } as editorState,
   reducers: {
     down: (state) => {
       state.focusedRow += 1;
@@ -12,7 +18,13 @@ export const editorSlice = createSlice({
     up: (state) => {
       state.focusedRow -= 1;
     },
+    play: (state) => {
+      state.isPlaying = true;
+    },
+    stop: (state) => {
+      state.isPlaying = false;
+    },
   },
 });
 
-export const { down, up } = editorSlice.actions;
+export const { down, up, play, stop } = editorSlice.actions;

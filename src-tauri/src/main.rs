@@ -8,14 +8,15 @@ mod prelude;
 mod sequencer;
 
 use prelude::*;
+use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, OnceLock}, future::IntoFuture,
 };
 
 use tauri::Manager;
-use tokio::{self, sync::mpsc};
+use tokio::{self, sync::mpsc::{self, unbounded_channel}, task::JoinHandle};
 
 struct KeyState(HashMap<Key, bool>);
 
@@ -27,22 +28,21 @@ async fn main() {
 
     let controller = Controller::new(dispatcher_event_tx.clone(), controller_event_rx).run();
 
-    let sequencer_thread_handle = std::thread::spawn(move || {
-        Sequencer::new(dispatcher_event_tx.clone(), sequencer_event_rx).run();
-    });
+    let (handle_tx, handle_rx) = mpsc::unbounded_channel();
+    handle_tx.send(tokio::spawn(controller)).unwrap();
 
-    //let sequencer_handle = tokio::spawn(sequencer);
-    let controller_handle = tokio::spawn(controller);
+    let sequencer = Sequencer::new(dispatcher_event_tx.clone(), sequencer_event_rx).run();
+    handle_tx.send(tokio::spawn(sequencer)).unwrap();
 
     tauri::Builder::default()
         .setup(move |app| {
             let window = app.get_window("main").unwrap();
 
             let dispatcher = frontend::Dispatcher::new(window.clone(), dispatcher_event_rx).run();
-            let dispatcher_handle = tokio::spawn(dispatcher);
-            let listener =
-                frontend::Listener::new(window, sequencer_event_tx, controller_event_tx).run();
-            let listener_handle = tokio::spawn(listener);
+            handle_tx.send(tokio::spawn(dispatcher)).unwrap();
+
+            let listener = frontend::Listener::new(window, sequencer_event_tx, controller_event_tx).run();
+            handle_tx.send(tokio::spawn(listener)).unwrap();
 
             #[cfg(debug_assertions)] // only include this code on debug builds
             {
@@ -56,8 +56,7 @@ async fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    let controller_result = tokio::join!(controller_handle);
-    controller_result.0.unwrap();
+    let handles = UnboundedReceiverStream::new(handle_rx).collect::<Vec<JoinHandle<()>>>();
 
-    sequencer_thread_handle.join().unwrap();
+    tokio::join!(handles);
 }
