@@ -420,6 +420,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "cpal",
+ "rand 0.8.5",
  "serde",
  "serde_json",
  "tauri",
@@ -427,6 +428,8 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
+ "tracing",
+ "tracing-subscriber",
  "ts-rs",
 ]
 

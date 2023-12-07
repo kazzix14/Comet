@@ -5,4 +5,6 @@ use serde::{Deserialize, Serialize};
 #[ts(export, export_to = "../src/@types/backend/controller/command.ts")]
 pub enum Command {
     HealthCheck,
+    Play,
+    Pause,
 }

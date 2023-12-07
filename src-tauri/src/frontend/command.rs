@@ -5,6 +5,6 @@ use serde::{Deserialize, Serialize};
 #[ts(export, export_to = "../src/@types/backend/command.ts")]
 pub enum Command {
     HealthCheck,
-    SequencerCommand { content: crate::sequencer::Command },
+    //SequencerCommand { content: crate::sequencer::Command },
     ControllerCommand { content: crate::controller::Command },
 }

@@ -12,37 +12,54 @@ use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex, OnceLock}, future::IntoFuture,
+    future::IntoFuture,
+    os::unix::thread,
+    sync::{Arc, Mutex, OnceLock},
 };
 
 use tauri::Manager;
-use tokio::{self, sync::mpsc::{self, unbounded_channel}, task::JoinHandle};
+use tokio::{
+    self,
+    sync::mpsc::{self, unbounded_channel},
+    task::JoinHandle,
+};
 
 struct KeyState(HashMap<Key, bool>);
 
 #[tokio::main]
 async fn main() {
-    let (sequencer_event_tx, sequencer_event_rx) = mpsc::unbounded_channel();
-    let (dispatcher_event_tx, dispatcher_event_rx) = mpsc::unbounded_channel();
+    setup_logger();
+
+    let (frontend_event_dispatcher_event_tx, frontend_event_dispatcher_event_rx) =
+        mpsc::unbounded_channel();
     let (controller_event_tx, controller_event_rx) = mpsc::unbounded_channel();
 
-    let controller = Controller::new(dispatcher_event_tx.clone(), controller_event_rx).run();
+    let controller_handle = std::thread::spawn(move || {
+        let mut controller = Controller::new(
+            frontend_event_dispatcher_event_tx.clone(),
+            controller_event_rx,
+        );
+        controller.set_output_device();
+        controller.run();
+    });
 
-    let (handle_tx, handle_rx) = mpsc::unbounded_channel();
-    handle_tx.send(tokio::spawn(controller)).unwrap();
-
-    let sequencer = Sequencer::new(dispatcher_event_tx.clone(), sequencer_event_rx).run();
-    handle_tx.send(tokio::spawn(sequencer)).unwrap();
+    let (join_handle_tx, join_handle_rx) = mpsc::unbounded_channel();
 
     tauri::Builder::default()
         .setup(move |app| {
             let window = app.get_window("main").unwrap();
 
-            let dispatcher = frontend::Dispatcher::new(window.clone(), dispatcher_event_rx).run();
-            handle_tx.send(tokio::spawn(dispatcher)).unwrap();
+            let frontend_event_dispatcher =
+                frontend::Dispatcher::new(window.clone(), frontend_event_dispatcher_event_rx).run();
+            join_handle_tx
+                .send(tokio::spawn(frontend_event_dispatcher))
+                .unwrap();
 
-            let listener = frontend::Listener::new(window, sequencer_event_tx, controller_event_tx).run();
-            handle_tx.send(tokio::spawn(listener)).unwrap();
+            let frontend_event_listener =
+                frontend::Listener::new(window, controller_event_tx).run();
+            join_handle_tx
+                .send(tokio::spawn(frontend_event_listener))
+                .unwrap();
 
             #[cfg(debug_assertions)] // only include this code on debug builds
             {
@@ -56,7 +73,20 @@ async fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    let handles = UnboundedReceiverStream::new(handle_rx).collect::<Vec<JoinHandle<()>>>();
+    controller_handle.join().unwrap();
+    let handles = UnboundedReceiverStream::new(join_handle_rx).collect::<Vec<JoinHandle<()>>>();
 
     tokio::join!(handles);
+}
+
+fn setup_logger() {
+    #[cfg(debug_assertions)]
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+
+    #[cfg(not(debug_assertions))]
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
 }

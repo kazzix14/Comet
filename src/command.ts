@@ -4,10 +4,10 @@ import { Command } from "./@types/backend/command";
 export const COMMAND_LOOKUP_TABLE: CommandLookupTable = {
   Escape: { type: "HealthCheck" },
   h: { type: "HealthCheck" },
-  " ": { type: "SequencerCommand", content: { type: "HealthCheck" } },
+  //" ": { type: "SequencerCommand", content: { type: "HealthCheck" } },
   s: {
-    p: { type: "SequencerCommand", content: { type: "Play" } },
-    s: { type: "SequencerCommand", content: { type: "Stop" } },
+    p: { type: "ControllerCommand", content: { type: "Play" } },
+    s: { type: "ControllerCommand", content: { type: "Pause" } },
   },
   x: {
     d: { type: "ControllerCommand", content: { type: "HealthCheck" } },
