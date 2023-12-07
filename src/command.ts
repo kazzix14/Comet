@@ -1,12 +1,12 @@
-import { Key } from "react";
 import { Command } from "./@types/backend/command";
-import { RootState } from "./main";
+
+type Key = string;
 
 export const COMMAND_LOOKUP_TABLE: CommandLookupTable = {
   Escape: { type: "HealthCheck" },
   h: { type: "HealthCheck" },
-  " ": (state: RootState): Command => {
-    if (state.editor.isPlaying) {
+  " ": (condition: CommandLookupCondition): Command => {
+    if (condition.isPlaying) {
       return { type: "ControllerCommand", content: { type: "Pause" } };
     } else {
       return { type: "ControllerCommand", content: { type: "Play" } };
@@ -25,14 +25,22 @@ export interface CommandLookupTable {
   [key: Key]: CommandLookupTable | AbleToBeCommand | undefined;
 }
 
-type CommandFunction = (state: RootState) => Command;
+type CommandFunction = (condition: CommandLookupCondition) => Command;
 type AbleToBeCommand = Command | CommandFunction;
 
-export const commandLookup = (keys: Array<Key>, state: RootState): Command | null => {
-  return recursiveCommandLookup(keys, state, COMMAND_LOOKUP_TABLE);
+export interface CommandLookupCondition {
+  isPlaying: boolean;
+}
+
+export const commandLookup = (keys: Array<Key>, condition: CommandLookupCondition): Command | null => {
+  return recursiveCommandLookup(keys, condition, COMMAND_LOOKUP_TABLE);
 };
 
-const recursiveCommandLookup = (keys: Array<Key>, state: RootState, commandLookupTable: CommandLookupTable): Command | null => {
+const recursiveCommandLookup = (
+  keys: Array<Key>,
+  condition: CommandLookupCondition,
+  commandLookupTable: CommandLookupTable
+): Command | null => {
   const key = keys.shift();
 
   if (key === undefined) {
@@ -44,11 +52,11 @@ const recursiveCommandLookup = (keys: Array<Key>, state: RootState, commandLooku
   if (lookupResult === undefined) {
     return null;
   } else if (isCommandFunction(lookupResult)) {
-    return lookupResult(state);
+    return lookupResult(condition);
   } else if (isCommand(lookupResult)) {
     return lookupResult;
   } else {
-    return recursiveCommandLookup(keys, state, lookupResult);
+    return recursiveCommandLookup(keys, condition, lookupResult);
   }
 };
 

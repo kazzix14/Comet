@@ -1,16 +1,21 @@
-import { AppDispatch, RootState } from "./main";
+import { AppDispatch, useAppSelector } from "./main";
 import { pushKey, clearKeys } from "./input.slice";
 
 import { useEffect } from "react";
 import { emit } from "@tauri-apps/api/event";
 import { commandLookup } from "./command";
 
-export const useInput = (dispatch: AppDispatch, state: RootState) => {
+export const useInput = (dispatch: AppDispatch) => {
+  const currentInputs = useAppSelector((state) => state.input.currentInputs);
+  const isPlaying = useAppSelector((state) => state.editor.isPlaying);
+
   useEffect(() => {
     const keyDownListener = async (event: KeyboardEvent) => {
       const key = event.key;
 
-      const command = commandLookup(state.input.currentInputs.concat(key), state);
+      const command = commandLookup(currentInputs.concat(key), {
+        isPlaying: isPlaying,
+      });
 
       if (command != null) {
         emit("command", command);
@@ -24,5 +29,5 @@ export const useInput = (dispatch: AppDispatch, state: RootState) => {
     return () => {
       window.removeEventListener("keydown", keyDownListener);
     };
-  }, [state.input.currentInputs, state.editor.isPlaying]);
+  }, [currentInputs, isPlaying]);
 };

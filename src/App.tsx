@@ -3,15 +3,14 @@ import { useInput } from "./input.hook";
 
 import React from "react";
 import styled from "styled-components";
-import { useAppDispatch, useAppSelector } from "./main";
+import { useAppDispatch } from "./main";
 import { useBackend } from "./backend.hook";
 import { COMMAND_LOOKUP_TABLE, displayCandidateKeys } from "./command";
 
 const App = () => {
   const dispatch = useAppDispatch();
-  const state = useAppSelector((state) => state);
 
-  useInput(dispatch, state);
+  useInput(dispatch);
   useBackend(dispatch);
 
   return (
