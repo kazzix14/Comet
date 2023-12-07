@@ -2,14 +2,14 @@ import { createSlice } from "@reduxjs/toolkit";
 
 interface editorState {
   focusedRow: number;
-  isPlaying: boolean | null;
+  isPlaying: boolean;
 }
 
 export const editorSlice = createSlice({
   name: "editor",
   initialState: {
     focusedRow: 0,
-    isPlaying: null,
+    isPlaying: false,
   } as editorState,
   reducers: {
     down: (state) => {

@@ -1,19 +1,24 @@
-import { COMMAND_LOOKUP_TABLE, CommandLookupTable } from "./command";
-
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 export type Key = string;
 
+interface inputState {
+  currentInputs: Array<Key>;
+}
+
 export const inputSlice = createSlice({
   name: "input",
   initialState: {
-    commandLookupTable: COMMAND_LOOKUP_TABLE,
-  },
+    currentInputs: [],
+  } as inputState,
   reducers: {
-    updateCommandLookupTable: (state, action: PayloadAction<CommandLookupTable>) => {
-      state.commandLookupTable = action.payload;
+    pushKey: (state, action: PayloadAction<Key>) => {
+      state.currentInputs = state.currentInputs.concat(action.payload);
+    },
+    clearKeys: (state) => {
+      state.currentInputs = [];
     },
   },
 });
 
-export const { updateCommandLookupTable } = inputSlice.actions;
+export const { pushKey, clearKeys } = inputSlice.actions;

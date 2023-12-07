@@ -1,7 +1,6 @@
 Comet
 
 ```sh
-cargo tauri dev
 npm run tauri dev
 ```
 

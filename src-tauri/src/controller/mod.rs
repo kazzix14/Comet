@@ -129,12 +129,18 @@ impl Controller {
                     if let Some(stream) = &self.current_stream {
                         stream.play().expect("failed to play stream");
                     }
+                    self.notification_dispatcher
+                        .send(Notification::Playing.into())
+                        .unwrap();
                 }
                 Command::Pause => {
                     self.is_playing = false;
                     if let Some(stream) = &self.current_stream {
                         stream.pause().expect("failed to pause stream");
                     }
+                    self.notification_dispatcher
+                        .send(Notification::Pausing.into())
+                        .unwrap();
                 }
             }
         }

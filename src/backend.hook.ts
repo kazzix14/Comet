@@ -22,6 +22,15 @@ export const useBackend = (dispatch: AppDispatch) => {
               dispatch(stop());
               break;
           }
+        } else if (payload.type === "ControllerNotification") {
+          switch (payload.content.type) {
+            case "Playing":
+              dispatch(play());
+              break;
+            case "Pausing":
+              dispatch(stop());
+              break;
+          }
         }
       }
     });

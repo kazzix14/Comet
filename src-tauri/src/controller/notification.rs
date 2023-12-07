@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 #[ts(export, export_to = "../src/@types/backend/controller/notification.ts")]
 pub enum Notification {
     HealthCheck,
+    Playing,
+    Pausing,
 }
 
 impl From<Notification> for crate::frontend::Notification {

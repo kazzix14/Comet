@@ -5,24 +5,22 @@ import React from "react";
 import styled from "styled-components";
 import { useAppDispatch, useAppSelector } from "./main";
 import { useBackend } from "./backend.hook";
-import { displayCandidateKeys } from "./command";
+import { COMMAND_LOOKUP_TABLE, displayCandidateKeys } from "./command";
 
 const App = () => {
   const dispatch = useAppDispatch();
-  const commandLookupTable = useAppSelector((state) => state.input.commandLookupTable);
+  const state = useAppSelector((state) => state);
 
-  useInput(dispatch, commandLookupTable);
+  useInput(dispatch, state);
   useBackend(dispatch);
 
   return (
     <div>
       <div>hello</div>
       <div>
-        <h2>
-          Possible Keys
-        </h2>
+        <h2>Possible Keys</h2>
         <ul>
-          {displayCandidateKeys(commandLookupTable).map((rest, idx) => (
+          {displayCandidateKeys(COMMAND_LOOKUP_TABLE).map((rest, idx) => (
             <li key={idx}>{rest}</li>
           ))}
         </ul>

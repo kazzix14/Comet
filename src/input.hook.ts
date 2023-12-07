@@ -1,27 +1,28 @@
-import { AppDispatch } from "./main";
-import { updateCommandLookupTable } from "./input.slice";
+import { AppDispatch, RootState } from "./main";
+import { pushKey, clearKeys } from "./input.slice";
 
 import { useEffect } from "react";
 import { emit } from "@tauri-apps/api/event";
-import { lookup, CommandLookupTable } from "./command";
+import { commandLookup } from "./command";
 
-export const useInput = (dispatch: AppDispatch, currentCommandLookupTable: CommandLookupTable) => {
+export const useInput = (dispatch: AppDispatch, state: RootState) => {
   useEffect(() => {
     const keyDownListener = async (event: KeyboardEvent) => {
       const key = event.key;
 
-      const [command, nextCommandLookupTable] = lookup(key, currentCommandLookupTable);
+      const command = commandLookup(state.input.currentInputs.concat(key), state);
 
       if (command != null) {
         emit("command", command);
+        dispatch(clearKeys());
+      } else {
+        dispatch(pushKey(key));
       }
-
-      dispatch(updateCommandLookupTable(nextCommandLookupTable));
     };
 
     window.addEventListener("keydown", keyDownListener);
     return () => {
       window.removeEventListener("keydown", keyDownListener);
     };
-  }, [currentCommandLookupTable]);
+  }, [state.input.currentInputs, state.editor.isPlaying]);
 };

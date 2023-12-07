@@ -8,17 +8,7 @@ const Editor = () => {
   return (
     <div>
       <h1> Editor </h1>
-      {
-        isPlaying ? (
-          <div>
-            Playing
-          </div>
-        ) : (
-          <div>
-            Not playing
-          </div>
-        )
-      }
+      {isPlaying ? <div>Playing</div> : <div>Not playing</div>}
     </div>
   );
 };
