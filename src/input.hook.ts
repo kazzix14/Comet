@@ -1,9 +1,9 @@
 import { AppDispatch, useAppSelector } from "./main";
-import { pushKey, clearKeys } from "./input.slice";
+import { pushKey, clearKeys, setCurrentCommandLookupTable } from "./input.slice";
 
 import { useEffect } from "react";
 import { emit } from "@tauri-apps/api/event";
-import { commandLookup } from "./command";
+import { commandLookup, isIdentified } from "./command";
 
 export const useInput = (dispatch: AppDispatch) => {
   const currentInputs = useAppSelector((state) => state.input.currentInputs);
@@ -13,15 +13,21 @@ export const useInput = (dispatch: AppDispatch) => {
     const keyDownListener = async (event: KeyboardEvent) => {
       const key = event.key;
 
-      const command = commandLookup(currentInputs.concat(key), {
+      const lookupResult = commandLookup(currentInputs.concat(key), {
         isPlaying: isPlaying,
       });
 
-      if (command != null) {
-        emit("command", command);
+      if (isIdentified(lookupResult)) {
+        const command = lookupResult.command;
+
+        if (command !== null) {
+          emit("command", command);
+        }
+
         dispatch(clearKeys());
       } else {
         dispatch(pushKey(key));
+        dispatch(setCurrentCommandLookupTable(lookupResult.rest));
       }
     };
 

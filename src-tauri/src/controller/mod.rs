@@ -82,6 +82,7 @@ impl Controller {
                 None, // None=blocking, Some(Duration)=timeout
             )
             .expect("failed to build output stream");
+        stream.pause().expect("failed to pause stream");
 
         self.current_stream = Some(Box::new(stream));
         self.current_output_device = Some(Rc::new(device));

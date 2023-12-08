@@ -1,60 +1,86 @@
-import { Command } from "./@types/backend/command";
+import { Command as BackendCommand } from "./@types/backend/command";
 
 type Key = string;
 
-export const COMMAND_LOOKUP_TABLE: CommandLookupTable = {
-  Escape: { type: "HealthCheck" },
-  h: { type: "HealthCheck" },
-  " ": (condition: CommandLookupCondition): Command => {
-    if (condition.isPlaying) {
-      return { type: "ControllerCommand", content: { type: "Pause" } };
-    } else {
+type Command = "HealthCheck" | "Play" | "Toggle" | "Pause";
+
+const toBackendCommand = (command: Command, condition: CommandLookupCondition): BackendCommand => {
+  switch (command) {
+    case "HealthCheck":
+      return { type: "HealthCheck" };
+    case "Play":
       return { type: "ControllerCommand", content: { type: "Play" } };
-    }
-  },
+    case "Pause":
+      return { type: "ControllerCommand", content: { type: "Pause" } };
+    case "Toggle":
+      if (condition.isPlaying) {
+        return { type: "ControllerCommand", content: { type: "Pause" } };
+      } else {
+        return { type: "ControllerCommand", content: { type: "Play" } };
+      }
+    default:
+      throw new Error("Unknown command");
+  }
+};
+
+export const COMMAND_LOOKUP_TABLE: CommandLookupTable = {
+  Escape: "HealthCheck",
+  " ": "Toggle",
   s: {
-    p: { type: "ControllerCommand", content: { type: "Play" } },
-    s: { type: "ControllerCommand", content: { type: "Pause" } },
-  },
-  x: {
-    d: { type: "ControllerCommand", content: { type: "HealthCheck" } },
+    s: "Play",
+    p: "Pause",
   },
 };
 
 export interface CommandLookupTable {
-  [key: Key]: CommandLookupTable | AbleToBeCommand | undefined;
+  [key: Key]: CommandLookupTable | Command | undefined;
 }
-
-type CommandFunction = (condition: CommandLookupCondition) => Command;
-type AbleToBeCommand = Command | CommandFunction;
 
 export interface CommandLookupCondition {
   isPlaying: boolean;
 }
 
-export const commandLookup = (keys: Array<Key>, condition: CommandLookupCondition): Command | null => {
+export const commandLookup = (keys: Array<Key>, condition: CommandLookupCondition): CommandLookupResult => {
   return recursiveCommandLookup(keys, condition, COMMAND_LOOKUP_TABLE);
 };
+
+export interface Identified {
+  type: "Identified";
+  command: BackendCommand | null;
+}
+export const isIdentified = (maybeIdentified: CommandLookupResult): maybeIdentified is Identified => {
+  if (maybeIdentified.type === "Identified") {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+export interface Unidentified {
+  type: "Unidentified";
+  rest: CommandLookupTable;
+}
+
+type CommandLookupResult = Identified | Unidentified;
 
 const recursiveCommandLookup = (
   keys: Array<Key>,
   condition: CommandLookupCondition,
   commandLookupTable: CommandLookupTable
-): Command | null => {
+): CommandLookupResult => {
   const key = keys.shift();
 
   if (key === undefined) {
-    return null;
+    return { type: "Unidentified", rest: commandLookupTable };
   }
 
   const lookupResult = commandLookupTable[key];
+  console.log(lookupResult);
 
   if (lookupResult === undefined) {
-    return null;
-  } else if (isCommandFunction(lookupResult)) {
-    return lookupResult(condition);
-  } else if (isCommand(lookupResult)) {
-    return lookupResult;
+    return { type: "Identified", command: null };
+  } else if (typeof lookupResult === "string") {
+    return { type: "Identified", command: toBackendCommand(lookupResult, condition) };
   } else {
     return recursiveCommandLookup(keys, condition, lookupResult);
   }
@@ -66,7 +92,7 @@ export const displayCandidateKeys = (commandLookupTable: CommandLookupTable, cur
 
     const appended = `${current}${key}`;
 
-    if (result === undefined || isCommand(result) || isCommandFunction(result)) {
+    if (result === undefined || typeof result === "string") {
       return appended;
     }
 
@@ -74,18 +100,10 @@ export const displayCandidateKeys = (commandLookupTable: CommandLookupTable, cur
   });
 };
 
-const isCommandFunction = (maybeCommand: AbleToBeCommand | CommandLookupTable): maybeCommand is CommandFunction => {
-  if (typeof maybeCommand === "function") {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-const isCommand = (maybeCommand: AbleToBeCommand | CommandLookupTable): maybeCommand is Command => {
-  if (typeof maybeCommand !== "function" && maybeCommand.type !== undefined) {
-    return true;
-  } else {
-    return false;
-  }
-};
+// const isCommandFunction = (maybeCommand: Command | CommandLookupTable): maybeCommand is Command => {
+//   if (maybeCommand.type !== "undefined") {
+//     return true;
+//   } else {
+//     return false;
+//   }
+// };
