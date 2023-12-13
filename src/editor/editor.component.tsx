@@ -26,9 +26,13 @@ export const Sheet = () => {
 };
 
 export const Row = ({ columnCount }: { columnCount: number }) => {
-  return <div className={RowStyle}>
-    {[...Array(columnCount)].map((_, idx) => <Cell key={idx} />)}
-  </div>;
+  return (
+    <div className={RowStyle}>
+      {[...Array(columnCount)].map((_, idx) => (
+        <Cell key={idx} />
+      ))}
+    </div>
+  );
 };
 
 Row.propTypes = {

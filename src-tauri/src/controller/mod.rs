@@ -6,6 +6,8 @@ pub use notification::Notification;
 
 use crate::frontend;
 
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::{cell::RefCell, rc::Rc};
 
@@ -20,6 +22,7 @@ pub struct Controller {
     current_output_device: Option<Rc<cpal::Device>>,
     current_output_device_config: Option<Rc<cpal::StreamConfig>>,
     current_stream: Option<Box<cpal::Stream>>,
+    audio_buffer: Arc<Mutex<VecDeque<f64>>>,
 }
 
 impl Controller {
@@ -35,6 +38,7 @@ impl Controller {
             current_output_device: None,
             current_output_device_config: None,
             current_stream: None,
+            audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
         }
     }
 
@@ -44,20 +48,11 @@ impl Controller {
             .default_output_device()
             .expect("failed to get default output device");
 
-        let mut supported_configs = device
-            .supported_output_configs()
-            .expect("error while querying configs");
-        let supported_config_range = supported_configs.next().expect("no supported config?!");
-        dbg!(supported_config_range.clone());
-        let config = supported_config_range
-            .with_sample_rate(cpal::SampleRate(44100))
-            .config();
-
-        dbg!(config.clone());
-        dbg!(device.name());
+        tracing::debug!("{:?}", device.name());
         self.current_output_device_config =
             Some(Rc::new(device.default_output_config().unwrap().config()));
 
+        let audio_buffer = Arc::clone(&self.audio_buffer);
         let stream = device
             .build_output_stream(
                 &self
@@ -66,13 +61,15 @@ impl Controller {
                     .expect("no config?!"),
                 move |data: &mut [f32], info: &cpal::OutputCallbackInfo| {
                     // react to stream events and read or write stream data here.
-                    tracing::debug!("writing audio");
-
-                    tracing::debug!("{:?}", info);
-                    let mut i = 0f32;
                     for sample in data.iter_mut() {
-                        *sample = i.sin();
-                        i = i + 1.0 / 44100.0 * 440.0;
+                        if let Some(audio) =
+                            audio_buffer.lock().expect("failed to Lock").pop_front()
+                        {
+                            *sample = audio as f32;
+                        } else {
+                            tracing::debug!("no audio data");
+                            *sample = 0f32;
+                        }
                     }
                 },
                 move |err| {
@@ -88,24 +85,35 @@ impl Controller {
         self.current_output_device = Some(Rc::new(device));
     }
 
+    /*
+     * イベントループでシートの内容を読み込んで、オーディオとして積んでいく
+     */
     pub fn run(mut self) {
         loop {
             //tracing::debug!("Controller::run");
 
             self.process_commands();
 
-            if let Some(device) = self.current_output_device.clone() {
-                //tracing::debug!("device: {:?}", device.fm);
-                if self.is_playing {
-                    //tracing::debug!("is_playing");
-                    // write audio to buffer
+            //tracing::debug!("device: {:?}", device.fm);
+            if self.is_playing {
+                //tracing::debug!("is_playing");
+                // write audio to buffer
+                let mut audio_buffer = self.audio_buffer.lock().expect("failed to Lock");
 
-                    // send buffer to IO
-                    //device.as_inner().to_owned();
-                    //tracing::debug!("{:?}", device.as_inner());
+                const BUFFER_SIZE: usize = 40000;
 
-                    //tracing::debug!("built stream");
+                if audio_buffer.len() < BUFFER_SIZE {
+                    // audio_bufferにデータが足りない場合は、シートの内容を読み込む
+                    // TODO: シートの内容を読み込む
+                    // TODO: シートの内容をオーディオに変換する
+                    audio_buffer.push_back(rand::random::<f64>() * 2.0 - 1.0);
                 }
+
+                // send buffer to IO
+                //device.as_inner().to_owned();
+                //tracing::debug!("{:?}", device.as_inner());
+
+                //tracing::debug!("built stream");
             }
 
             //sleep(std::time::Duration::from_millis(100));
